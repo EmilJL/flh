@@ -1,5 +1,5 @@
 import React, {Component} from 'react';
-import {Text, TextInput, TouchableOpacity, View, Dimensions, Platform, Alert} from 'react-native';
+import {Text, TextInput, TouchableOpacity, View, Dimensions, Platform, Alert, ScrollView} from 'react-native';
 import {Button} from "react-native-elements";
 import StyleSheet from './Login.component.style';
 import LocationServicesDialogBox from "react-native-android-location-services-dialog-box";
@@ -69,7 +69,7 @@ class Login extends Component {
 		const width = this.props.width 
 		const navbarHeight = Platform.select({ ios: 20, android: 24 });
 		return(
-			<View style={[styles.container, {height: height/1.7, width: width, paddingTop: width/15, paddingLeft: width/15, paddingRight: width/15, paddingBottom: width/15+navbarHeight}]}>
+			<View style={[styles.container, {height: 400, width: width, paddingTop: 20, paddingLeft: 25, paddingRight: 25, paddingBottom: 25+navbarHeight}]}>
 				<Text style={styles.textHeader}>Log venligst ind</Text>
 
 				<View style={styles.textInputContainer}>
@@ -77,11 +77,10 @@ class Login extends Component {
 					<TextInput selectTextOnFocus={true} ref={(input) => { this.secondTextInput = input; }} textContentType='password' placeholder='Indtast dit kodeord' onChangeText={(input) => this.setState({password: input})} style={styles.textInput} secureTextEntry={true}/>
 				</View>
 				
-			
 				<View style={styles.buttonContainer}>
-					<Button title={'LOG IND'} buttonStyle={[styles.button, {width: width/2.2, height: width/6.6, borderRadius: width/2.2}]} titleStyle={styles.buttonFont} onPress={() => this.handleLoginPress()}/>
+					<Button title={'LOG IND'} buttonStyle={[styles.button, {width: 170, height: 55, borderRadius: 55}]} titleStyle={styles.buttonFont} onPress={() => this.handleLoginPress()}/>
 				</View>		
-				<TouchableOpacity onPress={() => this.props.forgotPWToggle()} style={[styles.forgotPWTouchableOpacity, {marginTop: '-5%'}]}>
+				<TouchableOpacity onPress={() => this.props.forgotPWToggle()} style={[styles.forgotPWTouchableOpacity]}>
 					<Text style={styles.forgotPWLabel}>
 						Glemt dit log in? Tryk her
 					</Text>

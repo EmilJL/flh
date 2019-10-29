@@ -24,11 +24,9 @@ export default StyleSheet.create({
     position: 'absolute'
   },
   buttonTimer: {
-    top: '21%',
-    left: '33%',
+    bottom: 35,
   	fontWeight: '300',
   	fontSize: 16,
-    position: 'absolute',
     color: '#ffffff',
     textAlign: 'center'
   },
@@ -36,7 +34,8 @@ export default StyleSheet.create({
     fontSize: 22,
     fontWeight: '900',
     color: '#ffffff',
-    alignSelf: 'center'
+    alignSelf: 'center',
+    position: 'absolute'
   },
   infoText: {
     color: '#ffffff',

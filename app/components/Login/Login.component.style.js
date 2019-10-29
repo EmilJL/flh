@@ -51,7 +51,6 @@ export default StyleSheet.create({
   },
   forgotPWTouchableOpacity: {
     flex: 2,
-    paddingTop: '3%',
     justifyContent: 'flex-start',
     alignContent: 'center',
 

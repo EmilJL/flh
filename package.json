@@ -12,6 +12,7 @@
     "react": "16.8.3",
     "react-native": "0.59.8",
     "react-native-android-location-services-dialog-box": "^2.8.1",
+    "react-native-background-task": "^0.2.1",
     "react-native-boundary": "^1.0.8",
     "react-native-elements": "^1.1.0",
     "react-native-geolocation-service": "^2.0.1",

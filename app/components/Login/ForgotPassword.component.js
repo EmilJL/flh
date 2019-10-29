@@ -49,7 +49,7 @@ class ForgotPassword extends Component {
 		const width = this.props.width 
 		const navbarHeight = Platform.select({ ios: 20, android: 24 });
 		return(
-			<View style={[styles.container, {height: height/1.9, width: width, paddingTop: width/15, paddingLeft: width/15, paddingRight: width/15, paddingBottom: width/15+navbarHeight}]}>
+			<View style={[styles.container, {height: 330, width: width, paddingTop: 25, paddingLeft: 25, paddingRight: 25, paddingBottom: 25+navbarHeight}]}>
 
 				<Text style={styles.textHeader}>Glemt adgangskode?</Text>
 
@@ -59,7 +59,7 @@ class ForgotPassword extends Component {
 				
 			
 				<View style={{flex: 3, justifyContent: 'center', alignContent: 'center'}}>
-					<Button title={'SEND KODE'} buttonStyle={[styles.button, {width: width/2.2, height: width/6.6, borderRadius: width/2.2}]} titleStyle={styles.buttonFont} onPress={() => this.handlePWRequest()}/>
+					<Button title={'SEND KODE'} buttonStyle={[styles.button, {width: 170, height: 55, borderRadius: 55}]} titleStyle={styles.buttonFont} onPress={() => this.handlePWRequest()}/>
 				</View>
 				<View style={styles.forgotPWTouchableOpacity}>
 					<Text style={styles.forgotPWLabel}>

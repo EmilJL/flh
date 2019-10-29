@@ -1,10 +1,11 @@
 import React, {Component} from 'react';
-import {Text, View, Platform, TouchableOpacity, Alert, DeviceEventEmitter} from 'react-native';
+import {Text, View, Platform, TouchableOpacity, Alert, DeviceEventEmitter, ScrollView, AsyncStorage} from 'react-native';
 import Header from '../Header/Header.component';
 import StyleSheet from './Main.component.style';
 import Geolocation from 'react-native-geolocation-service';
 import LocationServicesDialogBox from "react-native-android-location-services-dialog-box";
 import Boundary, {Events} from 'react-native-boundary';
+import BackgroundTask from 'react-native-background-task';
 
 function processResponse(response){
 	const statusCode = response.status;
@@ -54,6 +55,14 @@ class Main extends Component {
 		isOnWorksite: false,
 		currentWorksiteID: null,
 	}
+
+	storeData = async (itemName, itemValue) => {
+	  try {
+	    await AsyncStorage.setItem('@LocationStore:'+itemName, itemValue);
+	  } catch (error) {
+	  }
+	}
+
 	handleCheckin = () => {
 			this.props.checkLocationPermission();
 			if (this.state.locationEnabled && this.props.hasLocationPermission) {
@@ -77,6 +86,9 @@ class Main extends Component {
 						let timer = setInterval(() => this.handleTimerTick(), 1000);
 						this.setState({timer});
 						this.setState({hasRunningLog: true});
+						this.storeData("hasRunningLog", "yes");
+						BackgroundTask.cancel();
+						BackgroundTask.schedule();
 					Promise.resolve();
 				})
 				.catch(error => console.error(error));
@@ -98,52 +110,26 @@ class Main extends Component {
 		.then(res => {
 			const { statusCode, data } = res;
         	if (statusCode == 200 || statusCode == 500) {
-				this.setState({totalTime: '00:00:00', seconds: 0, minutes: 0, hours: 0, hasRunningLog: false});
-				clearInterval(this.state.timer);
-        	}
+				try {
+					this.setState({totalTime: '00:00:00', seconds: 0, minutes: 0, hours: 0, hasRunningLog: false});
+					clearInterval(this.state.timer);
+					this.storeData("hasRunningLog", "no");
+				}
+				catch(e) {			
+				}
+        	} 	
         	else {
         		console.log('wtf');
         	}
+        	BackgroundTask.cancel();
         	if (isLogout) {
         		this.props.handleLogout();
         	}
 		})
 		.catch(error => console.error(error));
-	}
-	setBoundaries = () => {
-		var data = this.props.siteData;
-		for (var i = 0; i < data.length; i++) {
-			var site = data[i];
-			Boundary.add({
-				lat: parseFloat(site.iLat),
-				lng: parseFloat(site.iLng),
-				radius: parseFloat(site.iRadius),
-				id: site.sWorksiteName
-			});
-			Boundary.on(Events.ENTER, id => {
-				this.setState({isOnWorksite: true, currentWorksiteID: site.iWorksiteID});
-				console.log(`Du er nu på ${id}!!`);
-			});
-			Boundary.on(Events.EXIT, id => {
-				this.setState({isOnWorksite: false, currentWorksiteID: null});
-				Alert.alert(
-				  'Ude for område!',
-				  'Du har forladt dit arbejdsområde, og bliver derfor chekket ud.',
-				  [
-				    {text: 'OK'},
-				  ],
-				  {cancelable: false},
-				)
-				this.handleCheckout(false);
-			})
-		}
+
 	}
 	handleLogout = () => {
-		if (Platform.OS === 'android') 
-		{
-			LocationServicesDialogBox.stopListener();
-		}
-		this.removeBoundaries();
 		this.handleCheckout(true);
 	}
 	handleButtonClick = () => {
@@ -172,10 +158,10 @@ class Main extends Component {
 		var currentLon;
 		if (Platform.OS === 'android') {}
 		Geolocation.getCurrentPosition(
-					(position) => {
-						currentLat=position.coords.latitude;
-						currentLon=position.coords.longitude;
-						var sites = this.props.siteData;
+		(position) => {
+			currentLat=position.coords.latitude;
+			currentLon=position.coords.longitude;
+			var sites = this.props.siteData;
 		var isWithin = false;
 		for (var i = 0; i < sites.length; i++) {
 			var distance = calcCrow(sites[i].iLat, sites[i].iLng, currentLat, currentLon);
@@ -209,8 +195,6 @@ class Main extends Component {
 		            },
 		            { enableHighAccuracy: true, timeout: 15000, maximumAge: 10000}
 		);
-
-
 	}
 
 	handleTimerTick = () => {
@@ -242,10 +226,7 @@ class Main extends Component {
 		let totalTime = (hours > 9 ? ""+hours : "0"+hours) + ':' + (minutes > 9 ? ""+minutes : "0"+minutes) + ':' + (seconds > 9 ? ""+seconds : "0"+seconds);
 		this.setState({seconds, minutes, hours, totalTime});
 	}
-	componentDidMount() {
-        if (Platform.OS === 'android') 
-		{
-			
+	componentDidMount()
 			LocationServicesDialogBox.checkLocationServicesIsEnabled({
 	            message: "<h2>Use Location ?</h2>This app wants to change your device settings:<br/><br/>Use GPS, Wi-Fi, and cell network for location<br/><br/><a href='#'>Learn more</a>",
 	            ok: "YES",
@@ -255,55 +236,18 @@ class Main extends Component {
 	            openLocationServices: true, // false => Directly catch method is called if location services are turned off
 	            preventOutSideTouch: false, //true => To prevent the location services popup from closing when it is clicked outside
 	            preventBackClick: false, //true => To prevent the location services popup from closing when it is clicked back button
-	            providerListener: true // true ==> Trigger "locationProviderStatusChange" listener when the location state changes
+	            providerListener: ´false // true ==> Trigger "locationProviderStatusChange" listener when the location state changes
         	}).then(function(success) {
 	            // success => {alreadyEnabled: true, enabled: true, status: "enabled"}
             	this.setState({locationEnabled: true });
 	        }.bind(this)).catch((error) => {
 	            console.log(error.message);
         	});
-
-        	DeviceEventEmitter.addListener('locationProviderStatusChange', function(status) { // only trigger when "providerListener" is enabled
-	            
-	            if (status.enabled) {
-	            	this.props.checkLocationPermission();
-	            	this.setState({locationEnabled: true});
-	            	
-	            }
-	            else {
-	            	this.props.checkLocationPermission();
-	            	this.setState({locationEnabled: false});
-	            	if (this.state.hasRunningLog) {
-	            	Alert.alert(
-				  'Lokation slået fra!',
-				  'Du har slået lokation fra, og bliver derfor chekket ud.',
-				  [
-				    {text: 'OK'},
-				  ],
-				  {cancelable: false},
-					)
-	            		this.setState({isOnWorksite: false});
-	            		this.handleCheckout(false);
-	            	}
-
-	            }
-	            //  status => {enabled: false, status: "disabled"} or {enabled: true, status: "enabled"}
-	        }.bind(this));
-	        
-	        this.setBoundaries();
 		}
-	}
-	removeBoundaries() {
-		console.log('ja?');
-		Boundary.removeAll();
+
 	}
 	componentWillUnmount(){
 		clearInterval(this.state.timer);
-		if (Platform.OS === 'android') 
-		{
-			LocationServicesDialogBox.stopListener();
-		}
-		this.removeBoundaries();
 	}
 	render(){
 		const styles = StyleSheet;
@@ -312,12 +256,12 @@ class Main extends Component {
 		const height = this.props.height;
 		return(
 			<View style={{flex: 1}}>
-				<View style={{height: height/14, width: width, position: 'absolute', top: 0, left: 0}}>
-								<Header handleLogout={() => {this.handleLogout()}} height={height} width={width} isLoggedIn={this.props.isLoggedIn}/>
-				</View>
+			<View style={{height: 40, width: width, position: 'absolute', top: 0, left: 0}}>
+				<Header handleLogout={() => {this.handleLogout()}} height={height} width={width} isLoggedIn={this.props.isLoggedIn}/>
+			</View>
 				<View style={styles.container}>
-					<View style={[styles.buttonBorder, {width: (width/2)+20, height: (width/2)+20, borderRadius: (width/2)+20}]}>
-						<TouchableOpacity onPress={() => this.handleButtonClick()} style={[styles.button, {width: width/2, height: width/2, borderRadius: width/2, opacity: this.props.isOnWorksite ? 1 : 1}]}>
+					<View style={[styles.buttonBorder, {width: 200, height: 200, borderRadius: 200}]}>
+						<TouchableOpacity onPress={() => this.handleButtonClick()} style={[styles.button, {width: 180, height: 180, borderRadius: 180}]}>
 							<Text style={styles.buttonTimer}>
 								{this.state.hasRunningLog ? this.state.totalTime : ''}
 							</Text>
@@ -328,7 +272,7 @@ class Main extends Component {
 							
 						</TouchableOpacity>
 					</View>
-					<Text style={[styles.infoText, {top: height/4}]}>
+					<Text style={[styles.infoText, {top: 150}]}>
 						{this.state.hasRunningLog ? 'Husk at checke ud, når du forlader pladsen.' : 'Du kan kun checke ind, når du er på eller i nærheden af pladsens område.'}
 					</Text>
 				</View>
